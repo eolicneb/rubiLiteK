@@ -71,7 +71,6 @@ class Giro(Mm):
             -1: (1, -3, 2), -2: (3, 2, -1), -3: (-2, 1, 3)}
     def __init__(self, cara, sentido = 1):
         opcion = Giro.menu[cara]
-        print("En giro: ", cara, opcion)
         m = [ Versor(opcion[i]).op \
               if sentido < 0 and not i + 1 == abs(cara) \
               else Versor(opcion[i]) \
@@ -90,10 +89,12 @@ class Pieza(object):
         self.i_pos = Ee(i_pos)
         self.i_gir = Mm(*[ Versor(i) for i in range(1, 4) ])
         self.pos = Ee(i_pos)
-        self.gir = self.i_gir
+        self.gir = Mm(self.i_gir)
+        self.ind = Mm(self.i_gir)
     def girar(self, mm):
         self.pos.girar(mm)
         self.gir.girar(mm)
+        self.ind.girar(mm.t)
     @property
     def quieto(self):
         from math import floor
@@ -106,13 +107,13 @@ class Pieza(object):
             de Versores establecido en la tupla Pieza.orden
         """
         if self.quieto:
-            ind = tuple([ Pieza.isVersor(e) for e in self.gir.m ] + 
-                        [ Pieza.isVersor(e.op) for e in self.gir.m ])
+            ind = tuple([ Pieza.isVersor(e) for e in self.gir.t.m ] + 
+                        [ Pieza.isVersor(e.op) for e in self.gir.t.m ])
             return ind if not self.caras else tuple([ self.caras[i] for i in ind ])
     def ubicado(self):
         return self.pos == self.i_pos and self.gir == self.i_gir
     def __str__(self):
-        return "p: " + str(self.pos) + ", g: " + str(self.gir * Ee((1, 1, 1)))
+        return "p: " + str(self.pos) + "\ng:\n {}\n {}\n {}".format(*self.gir.m)
     
 class Cubo(object):
     puntos = [ (i % 3 - 1, (i//3) % 3 - 1, (i//9) % 3 - 1) for i in range(27) if not i == 13 ]
@@ -123,11 +124,13 @@ class Cubo(object):
     def __init__(self, caras = []):
         self.piezas = [ Pieza(p, caras) for p in Cubo.puntos ]
         self.caras = caras
-    def girar(self, cara, sentido):
+    def girar(self, cara, sentido, verbose=None):
         g = Giro(cara, sentido)
         for p in self.piezas:
             if Cubo.pertenece(p, cara):
+                if verbose: print("\nmoviendo\n{}\n{}".format(p, p.mirar))
                 p.girar(g)
+                if verbose: print("a\n{}\n{}".format(p, p.mirar))
     def __str__(self):
         caras = {0: {}, 1: {}, 2: {}, 3: {}, 4: {}, 5: {}}
         porpieza = tuple([ (p.pos.e, p.mirar) for p in self.piezas ])
@@ -190,9 +193,17 @@ if __name__ == "__main__":
     q.girar(m * m)
     print(q.mirar)
     rubik = Cubo(caras)
+    print("*" * 15)
     rubik.girar(1, 1)
+    print("*" * 15)
     rubik.girar(3, 1)
+    print("*" * 15)
     print(rubik)
     for p in rubik.piezas:
         if p.pos.e[2] == 1:
             print(p, p.mirar)
+    
+    pi = Pieza((-1, 1, 1), caras)
+    pi.girar(Giro(1, 1))
+    pi.girar(Giro(3, 1))
+    print(pi.mirar)
