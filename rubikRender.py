@@ -24,8 +24,8 @@ scr = SR.Pantalla(
 #            camara=(5, 5, 2),
             pixAlto=120,
             pixAncho=120,
-            pixLejos=1000,
-            minDist=.01,
+            pixLejos=9000,
+            minDist=.001,
             maxIter=40
         )
 #caras = ('MW', 'XX', '.`', '==', '69', '||', '  ')

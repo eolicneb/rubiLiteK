@@ -31,7 +31,8 @@ class Cubito(Solido):
     def estimador(self, punto):
         imax = max([ (abs(v), i + (0 if v > 0.0 else 3)) for i, v in enumerate(punto.e) ])
         d = ( (abs(p) - self.anc)**2 if abs(p) > self.anc else 0.0 for p in punto.e )
-        return sum(d)**0.5 - self.bis, imax[1]
+        d = sum(d)**0.5 - self.bis
+        return d, imax[1] if imax[0] > self.anc + self.bis else -1
 
 class Asamble(object):
     def __init__(self, bolsa):
@@ -42,7 +43,8 @@ class Asamble(object):
 class Pantalla(object):
     def __init__(self, camara=(5, 5, 5), pixLejos=10000, 
                  pixAlto=100, pixAncho=100, 
-                 minDist=0.01, maxIter=10, maxDist=10):
+                 minDist=0.01, maxIter=10, maxDist=10,
+                 verbose=False):
         self.cam = Ray(camara)
         self.pL = pixLejos
         self.pH = pixAlto//2
@@ -50,6 +52,7 @@ class Pantalla(object):
         self.minDist = minDist
         self.maxIter = maxIter
         self.maxDist = maxDist
+        self.verbose = verbose
         self.setearRays()
     def setearRays(self):
         cam, l = self.cam, self.cam.largo
@@ -73,8 +76,9 @@ class Pantalla(object):
         else:
             return de[1]
     def mirarAlgo(self, algo):
-        return ( [ self.rayMarch(pw, ph, algo) for pw in range(-self.pW, self.pW + 1) ]
-                  for ph in range(self.pH, -self.pH - 1, -1) )
+        for ph in range(self.pH, -self.pH - 1, -1):
+            print(ph)
+            yield [ self.rayMarch(pw, ph, algo) for pw in range(-self.pW, self.pW + 1) ]
 
 if __name__ == "__main__":
     from math import sin, cos
