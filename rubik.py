@@ -5,77 +5,7 @@ Created on Mon May 27 23:04:26 2019
 @author: nicoB
 """
 
-class Ee(object):
-    def __init__(self, trio):
-        if isinstance(trio, Ee):
-            self.e = tuple([ trio.e[i] for i in range(3) ])
-        else:
-            self.e = tuple([ trio[i] for i in range(3) ])
-    def __mul__(self, other):
-        #from functools import reduce        
-        #return reduce((lambda x, y: y[0] * y[1] + x), zip(self.e, other.e))
-        if isinstance(other, Ee):
-            out = 0
-            for x, y in zip(self.e, other.e):
-                out += x * y
-            return out
-        elif isinstance(other, Mm):
-            return other * self
-    def girar(self, mm):
-        self.e = Ee(mm * self).e
-    def __str__(self):
-        return "({:5.2f}, {:5.2f}, {:5.2f})".format(*self.e)
-    def __eq__(self, other):
-        if not isinstance(other, Ee):
-            return False
-        else:
-            return all(( self.e[i] == other.e[i] for i in range(3) ))
-    @property
-    def op(self):
-        return Ee([ -1 * self.e[i] for i in range(3) ])
-
-class Versor(Ee):
-    def __init__(self, eje):
-        v = [ (-1 if eje < 0 else 1) * (1 if i == abs(eje) - 1 else 0) for i in range(3) ]
-        super().__init__(v)
-
-class Mm(object):
-    def __init__(self, *arg):
-        if isinstance(arg[0], Mm):
-            self.m = tuple(( arg[0].m[i] for i in range(3) ))
-        else:
-            self.m = tuple(( Ee(arg[i]) for i in range(3) ))
-    def __mul__(self, other):
-        if isinstance(other, Ee):
-            return Ee([ self.t.m[i] * other for i in range(3) ])
-        elif isinstance(other, Mm):
-            return Mm(*([ [ self.t.m[i] * other.m[j] for i in range(3) ] for j in range(3) ]))
-    def __str__(self):
-        return "\n".join([ str(self.m[i]) for i in range(3) ])
-    @property
-    def t(self):
-        return Mm(*([ [ self.m[i].e[j] for i in range(3) ] for j in range(3) ]))
-    @property
-    def tup(self):
-        return tuple(( tuple(( self.m[j].e[i] for i in range(3) )) for j in range(3) ))
-    def girar(self, mm):
-        self.m = Mm(mm * self).m
-    def __eq__(self, other):
-        if not isinstance(other, Mm):
-            return False
-        else:            
-            return all(( self.m[i] == other.m[i] for i in range(3) ))
-
-class Giro(Mm):
-    menu = {1: (1, 3, -2), 2: (-3, 2, 1), 3: (2, -1, 3),
-            -1: (1, -3, 2), -2: (3, 2, -1), -3: (-2, 1, 3)}
-    def __init__(self, cara, sentido = 1):
-        opcion = Giro.menu[cara]
-        m = [ Versor(opcion[i]).op \
-              if sentido < 0 and not i + 1 == abs(cara) \
-              else Versor(opcion[i]) \
-              for i in range(3) ]
-        super().__init__(*m)
+from rubikGeom import Ee, Versor, Mm, Giro
 
 class Pieza(object):
     orden = (Versor(1), Versor(2), Versor(3), Versor(-1), Versor(-2), Versor(-3))
@@ -90,11 +20,9 @@ class Pieza(object):
         self.i_gir = Mm(*[ Versor(i) for i in range(1, 4) ])
         self.pos = Ee(i_pos)
         self.gir = Mm(self.i_gir)
-        self.ind = Mm(self.i_gir)
     def girar(self, mm):
         self.pos.girar(mm)
         self.gir.girar(mm)
-        self.ind.girar(mm.t)
     @property
     def quieto(self):
         from math import floor
@@ -124,13 +52,15 @@ class Cubo(object):
     def __init__(self, caras = []):
         self.piezas = [ Pieza(p, caras) for p in Cubo.puntos ]
         self.caras = caras
-    def girar(self, cara, sentido, verbose=None):
+    def mover(self, cara, sentido, verbose=None):
         g = Giro(cara, sentido)
-        for p in self.piezas:
-            if Cubo.pertenece(p, cara):
-                if verbose: print("\nmoviendo\n{}\n{}".format(p, p.mirar))
-                p.girar(g)
-                if verbose: print("a\n{}\n{}".format(p, p.mirar))
+        for p in filter(lambda x: Cubo.pertenece(x, cara), self.piezas):
+            if verbose: print("\nmoviendo\n{}\n{}".format(p, p.mirar))
+            p.girar(g)
+            if verbose: print("a\n{}\n{}".format(p, p.mirar))
+    def girar(self, cara, mm):
+        for p in filter(lambda x: Cubo.pertenece(x, cara), self.piezas):
+            p.girar(mm)
     def __str__(self):
         caras = {0: {}, 1: {}, 2: {}, 3: {}, 4: {}, 5: {}}
         porpieza = tuple([ (p.pos.e, p.mirar) for p in self.piezas ])
@@ -194,9 +124,9 @@ if __name__ == "__main__":
     print(q.mirar)
     rubik = Cubo(caras)
     print("*" * 15)
-    rubik.girar(1, 1)
+    rubik.mover(1, 1)
     print("*" * 15)
-    rubik.girar(3, 1)
+    rubik.mover(3, 1)
     print("*" * 15)
     print(rubik)
     for p in rubik.piezas:
