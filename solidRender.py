@@ -32,13 +32,14 @@ class Cubito(Solido):
         imax = max([ (abs(v), i + (0 if v > 0.0 else 3)) for i, v in enumerate(punto.e) ])
         d = ( (abs(p) - self.anc)**2 if abs(p) > self.anc else 0.0 for p in punto.e )
         d = sum(d)**0.5 - self.bis
-        return d, imax[1] if imax[0] > self.anc + self.bis else -1
+        return d, imax[1] if imax[0] > self.anc + self.bis else -2
 
 class Asamble(object):
     def __init__(self, bolsa):
         self.asemb = bolsa
     def DE(self, punto):
-        return min([ obj.DE(punto) for obj in self.asemb ])
+        minD = min([ ((punto - p.o).largo, i) for i, p in enumerate(self.asemb) ])
+        return self.asemb[minD[1]].DE(punto)
 
 class Pantalla(object):
     def __init__(self, camara=(5, 5, 5), pixLejos=10000, 
@@ -82,34 +83,48 @@ class Pantalla(object):
 
 if __name__ == "__main__":
     from math import sin, cos
-    alfa = 0.5
+    alfa = 0.7
     se = sin(alfa)
     ce = cos(alfa)
     r = Mm((ce, se, 0), (-se, ce, 0), (0, 0, 1))
     
     c = Cubito(
-                origen=Ee((-3, -2, 0)),
+                origen=Ee((-1, -1, 0)),
                 giro=r,
                 ancho=1.0,
                 bisel=0.2
-            )
+              )
     u = Cubito(
-                origen=Ee((-1, -3.5, 0)),
+                origen=Ee((1.2, 0.2, 0)),
                 #giro=r,
                 ancho=0.8,
                 bisel=0.2
-            )
-    print(*c.DE(Ee((3, 3, 0))))
+              )
     scr = Pantalla(
-#            camara=(5, 5, 2),
-#            pixAlto=50,
-#            pixAncho=50,
-#            pixLejos=2000,
-#            minDist=.1
+            camara=(3, -3, 5),
+            pixAlto=300,
+            pixAncho=300,
+            pixLejos=60000,
+            minDist=.001,
+            maxIter=600
             )
-    caras = ('MW', 'XX', '.`', '==', '69', '||', '  ')
-    for i, l in enumerate(scr.mirarAlgo(Asamble((c, u)))):
-        for c in l:
-            print(caras[c], end="")
-        print()
+#    caras = ('MW', 'XX', '.`', '==', '69', '||', '  ')
+#    for i, l in enumerate(scr.mirarAlgo(Asamble((c, u)))):
+#        for c in l:
+#            print(caras[c], end="")
+#        print()
         #print("".join([ caras[c] for c in l ]))
+        
+    color = ((.9, .1, .1), (.9, .9, .9), (.1, .2, .9), 
+             (.8, .4, .1), (.8, .7, .0), (.2, .8, .2), 
+             (.3, .3, .3), (.0, .0, .0))
+    import numpy as np
+    npImg = np.array([ [ color[c] for c in l ] for l in scr.mirarAlgo(Asamble((c, u))) ])
+    
+    from matplotlib import pyplot as plt
+    plt.imshow(npImg) 
+    plt.show()
+    
+    from PIL import Image
+    img = Image.fromarray(np.uint8(npImg*255))
+    img.save('cubito.png')

@@ -55,7 +55,7 @@ class Ray(Ee):
             otro = otro.e
         if len(otro) == 0:
             otro = (otro, otro, otro)
-        return Ray(( e - o for e, o in zip(self.e, otro) ))
+        return Ray([ e - o for e, o in zip(self.e, otro) ])
     def __mul__(self, factor):
         from numbers import Number
         if isinstance(factor, Number):

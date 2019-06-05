@@ -12,21 +12,21 @@ c = rk.Cubo()
 c.mover(1,1)
 c.mover(3,-1)
 from math import sin, cos
-alfa = -0.2
+alfa = 0.3
 se = sin(alfa)
 ce = cos(alfa)
 r = rk.Mm((1, 0, 0), (0, se, ce), (0, -ce, se))
 c.girar(-1, r)
-a = SR.Asamble([ SR.Cubito(origen=p.pos, giro=p.gir) \
+a = SR.Asamble([ SR.Cubito(origen=p.pos, giro=p.gir, bisel=0.2) \
                 for p in c.piezas ])
 
 scr = SR.Pantalla(
 #            camara=(5, 5, 2),
-            pixAlto=120,
-            pixAncho=120,
-            pixLejos=9000,
+            pixAlto=240,
+            pixAncho=240,
+            pixLejos=38000,
             minDist=.001,
-            maxIter=40
+            maxIter=800
         )
 #caras = ('MW', 'XX', '.`', '==', '69', '||', '  ')
 #for i, l in enumerate(scr.mirarAlgo(a)):
@@ -35,10 +35,14 @@ scr = SR.Pantalla(
 #    print()
 color = ((.9, .1, .1), (.9, .9, .9), (.1, .2, .9), 
          (.7, .8, .1), (.9, .5, .0), (.2, .8, .2), 
-         (.0, .0, .0))
+         (.3, .3, .3), (.0, .0, .0))
 import numpy as np
 npImg = np.array([ [ color[c] for c in l ] for l in scr.mirarAlgo(a) ])
 
 from matplotlib import pyplot as plt
-plt.imshow(npImg)
+plt.imshow(npImg) 
 plt.show()
+
+from PIL import Image
+img = Image.fromarray(np.uint8(npImg*255))
+img.save('rubik.png')
