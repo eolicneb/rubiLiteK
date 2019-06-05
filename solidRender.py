@@ -63,23 +63,54 @@ class Pantalla(object):
         rH *= self.pH * l / self.pL
         rW *= self.pW * l / self.pL
         self.rH, self.rW = rH, rW
-    def rayMarch(self, pw, ph, algo):
+    def rayMarch(self, pw, ph, blanco):
         p = self.cam
         v = (p.negativo + self.rH * ph + self.rW * pw).versor
-        de, it = algo.DE(p), 0
+        de, it = blanco.DE(p), 0
         while de[0] > self.minDist and it < self.maxIter and de[0] < self.maxDist:
             p = p + v * de[0]
-            de = algo.DE(p)
+            de = blanco.DE(p)
             it += 1
 #        return "{:5.2f}, ".format(de[0])
         if it >= self.maxIter or de[0] >= self.maxDist:
             return -1
         else:
             return de[1]
-    def mirarAlgo(self, algo):
+    def worker(self, q):
+        while not q.empty():
+            pw, ph, blanco, dato = q.get()
+            #print("({}, {}) arrancando...".format(pw, ph))
+            dato.append(self.rayMarch(pw, ph, blanco))
+            #print("({}, {}) listo!".format(pw, ph))
+            q.task_done()
+    def mirarAlgo(self, blanco, MAX_THREADS = 16):
+        import threading as th
+        from queue import Queue
+        from time import time
+        t_0 = time()
+        jobs = Queue()
+        vista = []
         for ph in range(self.pH, -self.pH - 1, -1):
-            print(ph)
-            yield [ self.rayMarch(pw, ph, algo) for pw in range(-self.pW, self.pW + 1) ]
+            linea = []
+            vista.append(linea)
+            for pw in range(-self.pW, self.pW + 1):
+                dato = []
+                linea.append(dato)
+                jobs.put((pw, ph, blanco, dato))
+#                obrero = th.Thread(target=self.worker, args=(pw, ph, blanco, dato))
+#                obrero.setDaemon(True)
+#                plantel.append(obrero)
+#                obrero.start()
+        for iThr in range(MAX_THREADS):
+            obrero = th.Thread(target=self.worker, args=(jobs,))
+            obrero.start()
+#        for hilo in plantel:
+#            print("terminando ", hilo.getName())
+#            hilo.join()
+        jobs.join()
+        print("Tiempo usado en render: {:.4f}".format(time() - t_0))
+        print("habiendo utilizado {} threads".format(MAX_THREADS))
+        return vista
 
 if __name__ == "__main__":
     from math import sin, cos
@@ -119,7 +150,7 @@ if __name__ == "__main__":
              (.8, .4, .1), (.8, .7, .0), (.2, .8, .2), 
              (.3, .3, .3), (.0, .0, .0))
     import numpy as np
-    npImg = np.array([ [ color[c] for c in l ] for l in scr.mirarAlgo(Asamble((c, u))) ])
+    npImg = np.array([ [ color[c[0]] for c in l ] for l in scr.mirarAlgo(Asamble((c, u))) ])
     
     from matplotlib import pyplot as plt
     plt.imshow(npImg) 
