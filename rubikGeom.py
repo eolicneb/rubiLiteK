@@ -45,17 +45,19 @@ class Ray(Ee):
         d = ( i**2 for i in self.e )
         return sum(d)**0.5
     def __add__(self, otro):
-        if isinstance(otro, Ee):
-            otro = otro.e
-        if len(otro) == 0:
-            otro = (otro, otro, otro)
-        return Ray([ e + o for e, o in zip(self.e, otro) ])
+        if isinstance(otro, Ee) or isinstance(otro, Ray):
+            o = otro.e
+        else:
+            o = (otro, otro, otro)
+        e = self.e
+        return Ray((e[0] + o[0], e[1] + o[1], e[2] + o[2]))
     def __sub__(self, otro):
-        if isinstance(otro, Ee):
-            otro = otro.e
-        if len(otro) == 0:
-            otro = (otro, otro, otro)
-        return Ray([ e - o for e, o in zip(self.e, otro) ])
+        if isinstance(otro, Ee) or isinstance(otro, Ray):
+            o = otro.e
+        else:
+            o = (otro, otro, otro)
+        e = self.e
+        return Ray((e[0] - o[0], e[1] - o[1], e[2] - o[2]))
     def __mul__(self, factor):
         from numbers import Number
         if isinstance(factor, Number):
@@ -89,8 +91,7 @@ class Ray(Ee):
         return v
     @property
     def negativo(self):
-        n = Ray(self) * -1.0
-        return n
+        return Ray((self.e[0] * -1.0, self.e[1] * -1.0, self.e[2] * -1.0))
 
 class Mm(object):
     def __init__(self, *arg):
