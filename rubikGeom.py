@@ -11,6 +11,18 @@ class Ee(object):
             self.e = tuple([ trio.e[i] for i in range(3) ])
         else:
             self.e = tuple([ trio[i] for i in range(3) ])
+    def __getitem__(self, n):
+        return self.e[n]
+    def __iter__(self):
+        self.contador = 0
+        return self
+    def __next__(self):
+        n = self.contador
+        if n == 3:
+            raise StopIteration
+        else:
+            self.contador += 1
+            return self.e[n]
     def __mul__(self, other):
         if isinstance(other, Ee):
             out = 0
@@ -102,6 +114,18 @@ class Mm(object):
             self.m = tuple(( arg[0].m[i] for i in range(3) ))
         else:
             self.m = tuple(( Ee(arg[i]) for i in range(3) ))
+    def __getitem__(self, n):
+        return self.m[n]
+    def __iter__(self):
+        self.contador = 0
+        return self
+    def __next__(self):
+        n = self.contador
+        if n == 3:
+            raise StopIteration
+        else:
+            self.contador += 1
+            return self.m[n]
     def __mul__(self, other):
         if isinstance(other, Ee):
             return Ee([ self.t.m[i] * other for i in range(3) ])
@@ -141,3 +165,4 @@ if __name__ == "__main__":
     def de(punto):
         return (Ray((0, 0, 0)) - punto).largo
     print(a.normal(de))
+    for 
