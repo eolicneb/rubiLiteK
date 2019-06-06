@@ -165,4 +165,3 @@ if __name__ == "__main__":
     def de(punto):
         return (Ray((0, 0, 0)) - punto).largo
     print(a.normal(de))
-    for 
