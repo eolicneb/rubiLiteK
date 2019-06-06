@@ -4,6 +4,8 @@ Created on Mon Jun  3 21:04:38 2019
 
 @author: nicoB
 """
+import sys
+sys.path.append('\nico\Escritorio\Tecnicos\Python\rubik\rubiLiteK\rubiLiteK'.replace('\\','/'))
 
 from rubikGeom import Mm, Ee, Ray
 
@@ -58,11 +60,12 @@ class Pantalla(object):
     def setearRays(self):
         cam, l = self.cam, self.cam.largo
         rW = Ray((-cam.e[1], cam.e[0], 0.0))
-        alfa = 1.0 - l / rW.largo
+        alfa = - cam.e[2] / rW.largo #1.0 - l / rW.largo
         rH, rW = Ray((cam.e[0] * alfa, cam.e[1] * alfa, rW.largo)).versor, rW.versor
-        rH *= self.pH * l / self.pL
-        rW *= self.pW * l / self.pL
+        rH *= l / self.pL
+        rW *= l / self.pL
         self.rH, self.rW = rH, rW
+        print(cam, rH, rW)
     def rayMarch(self, pw, ph, algo):
         p = self.cam
         v = (p.negativo + self.rH * ph + self.rW * pw).versor
@@ -73,9 +76,12 @@ class Pantalla(object):
             it += 1
 #        return "{:5.2f}, ".format(de[0])
         if it >= self.maxIter or de[0] >= self.maxDist:
-            return -1
+            return {'color':-1, 'norm': Ray((0, 0, 0)), 'face': 0}
         else:
-            return de[1]
+            norm = p.normal(lambda q: algo.DE(q)[0])
+            return {'color': de[1], 
+                    'norm': norm,
+                    'face': norm * v.negativo}
     def mirarAlgo(self, algo):
         for ph in range(self.pH, -self.pH - 1, -1):
             print(ph)
@@ -83,7 +89,7 @@ class Pantalla(object):
 
 if __name__ == "__main__":
     from math import sin, cos
-    alfa = 0.7
+    alfa = 2.1
     se = sin(alfa)
     ce = cos(alfa)
     r = Mm((ce, se, 0), (-se, ce, 0), (0, 0, 1))
@@ -91,23 +97,23 @@ if __name__ == "__main__":
     c = Cubito(
                 origen=Ee((-1, -1, 0)),
                 giro=r,
-                ancho=1.0,
+                ancho=0.9,
                 bisel=0.2
               )
     u = Cubito(
                 origen=Ee((1.2, 0.2, 0)),
                 #giro=r,
-                ancho=0.8,
-                bisel=0.2
+                ancho=0.9,
+                bisel=0.05
               )
     scr = Pantalla(
-            camara=(3, -3, 5),
-            pixAlto=300,
-            pixAncho=300,
-            pixLejos=60000,
-            minDist=.001,
-            maxIter=600
-            )
+                    camara=(-2, 5, -2.5),
+                    pixAlto=500,
+                    pixAncho=500,
+                    pixLejos=700,
+                    minDist=.001,
+                    maxIter=600
+                  )
 #    caras = ('MW', 'XX', '.`', '==', '69', '||', '  ')
 #    for i, l in enumerate(scr.mirarAlgo(Asamble((c, u)))):
 #        for c in l:
@@ -119,7 +125,7 @@ if __name__ == "__main__":
              (.8, .4, .1), (.8, .7, .0), (.2, .8, .2), 
              (.3, .3, .3), (.0, .0, .0))
     import numpy as np
-    npImg = np.array([ [ color[c] for c in l ] for l in scr.mirarAlgo(Asamble((c, u))) ])
+    npImg = np.array([ [ [ color[c['color']][i] * (c['face'] * 0.5 + 0.5) for i in range(3) ] for c in l ] for l in scr.mirarAlgo(Asamble((c, u))) ])
     
     from matplotlib import pyplot as plt
     plt.imshow(npImg) 

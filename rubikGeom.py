@@ -12,8 +12,6 @@ class Ee(object):
         else:
             self.e = tuple([ trio[i] for i in range(3) ])
     def __mul__(self, other):
-        #from functools import reduce        
-        #return reduce((lambda x, y: y[0] * y[1] + x), zip(self.e, other.e))
         if isinstance(other, Ee):
             out = 0
             for x, y in zip(self.e, other.e):
@@ -62,8 +60,8 @@ class Ray(Ee):
         from numbers import Number
         if isinstance(factor, Number):
             return Ray((self.e[0] * factor, self.e[1] * factor, self.e[2] * factor))
-        else:
-            return self.__mul__(factor)
+        elif isinstance(factor, Ee):
+            return Ee(self) * factor
     def __iadd__(self, otro):
         if isinstance(otro, Ee):
             otro = otro.e
@@ -87,11 +85,16 @@ class Ray(Ee):
     @property
     def versor(self):
         v = Ray(self)
-        v *= (1.0 / self.largo)
+        v *= (1.0 / max(1e-8, self.largo))
         return v
     @property
     def negativo(self):
         return Ray((self.e[0] * -1.0, self.e[1] * -1.0, self.e[2] * -1.0))
+    def normal(self, DE, delta=1e-5):
+        dx, dy, dz = [ Ray(Versor(i + 1)) * delta for i in range(3) ]
+        return Ray((DE(self + dx) - DE(self - dx),
+                    DE(self + dy) - DE(self - dy),
+                    DE(self + dz) - DE(self - dz))).versor
 
 class Mm(object):
     def __init__(self, *arg):
@@ -130,3 +133,11 @@ class Giro(Mm):
               else Versor(opcion[i]) \
               for i in range(3) ]
         super().__init__(*m)
+
+if __name__ == "__main__":
+    a = Ray((3, 4, 5))
+    print(a*a)
+    print(isinstance(a, Ee))
+    def de(punto):
+        return (Ray((0, 0, 0)) - punto).largo
+    print(a.normal(de))
